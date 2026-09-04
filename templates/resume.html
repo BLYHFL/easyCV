@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ basics.name }} - 简历</title>
+    <link rel="stylesheet" href="/static/style.css?v={{ css_version }}" />
+    <link id="themeCss" rel="stylesheet" href="/static/themes/{{ theme }}.css?v={{ css_version }}" />
+    <script>
+      // ── 主题文件解析：URL ?theme= 参数优先，其次 localStorage 里上次的选择，最后默认 ──
+      // 服务端已按 ?theme= 渲染对应的 themes/{id}.css；若 localStorage 记忆与 URL 不一致
+      // （比如直接访问不带参数的 /resume），在首屏渲染前把 link 换成记忆中的主题文件。
+      (function () {
+        var THEMES = {{ themes | tojson }};
+        var wanted = new URLSearchParams(window.location.search).get("theme") || "";
+        if (!(wanted in THEMES)) {
+          try { wanted = localStorage.getItem("easyCV.theme") || ""; } catch (err) {}
+        }
+        if (!(wanted in THEMES)) {
+          wanted = {{ default_theme | tojson }};
+        }
+        try { localStorage.setItem("easyCV.theme", wanted); } catch (err) {}
+        window.__theme__ = wanted;
+        var link = document.getElementById("themeCss");
+        var target = "/static/themes/" + wanted + ".css?v={{ css_version }}";
+        if (link.getAttribute("href") !== target) {
+          link.setAttribute("href", target);
+        }
+      })();
+    </script>
+</head>
+
+<body>
+  <script>
+    // 挂主题类名（themes/*.css 的选择器以 body.theme-{id} 为作用域）
+    document.body.classList.add("theme-" + (window.__theme__ || {{ default_theme | tojson }}));
+  </script>
+
+  <div class="print-bar no-print">
+    <button onclick="window.print()">导出 PDF</button>
+    <a href="/editor?src={{ current_src | urlencode }}">编辑 YAML</a>
+  </div>
+
+  <script>
+    // 嵌在编辑器的预览 iframe 里时隐藏打印条：
+    // 在 iframe 内点「编辑 YAML」会再加载一层编辑器（套娃），window.print 也不可靠；
+    // 独立访问 /resume 页时打印条照常显示。
+    if (window.self !== window.top) {
+      var bar = document.querySelector(".print-bar");
+      if (bar) bar.style.display = "none";
+    }
+  </script>
+
+  <main class="page">
+
+    {# ========== 个人信息 ========== #}
+    <header class="header">
+      <div class="header-main">
+        <div class="header-left">
+          <h1>{{ basics.name }}</h1>
+          {# 基本信息 / 联系方式逐段渲染：留空（""）或缺失的字段连同分隔符一起不出现 #}
+          {% set info = [basics.age, basics.gender, basics.position] | select('string') | reject('equalto', '') | list %}
+          {% if info %}<p class="meta">{{ info | join(' · ') }}</p>{% endif %}
+          {% set contacts = [] %}
+          {% if basics.phone %}{% set _ = contacts.append('📞 ' ~ basics.phone) %}{% endif %}
+          {% if basics.email %}{% set _ = contacts.append('✉️ ' ~ basics.email) %}{% endif %}
+          {% if contacts %}<p class="meta">{{ contacts | join(' · ') }}</p>{% endif %}
+          {% if basics.project_url %}<p class="meta">🔗 项目地址：<a href="{{ basics.project_url }}" target="_blank">{{ basics.project_url }}</a></p>{% endif %}
+          {% if basics.education %}
+          <p class="meta education-meta">
+            {% for edu in basics.education %}
+            🎓 {{ edu.school }} · {{ edu.major }}（{{ edu.date }}）{% if not loop.last %}<br />{% endif %}
+            {% endfor %}
+          </p>
+          {% endif %}
+        </div>
+        {% if basics.photo %}
+        <div class="header-right">
+          <img class="avatar" src="{{ basics.photo }}" alt="证件照" />
+        </div>
+        {% endif %}
+      </div>
+    </header>
+
+    {# ========== 求职意向 ========== #}
+    {% if basics.target_position %}
+    <div class="target-position">
+      <strong>求职意向：</strong>{{ basics.target_position }}
+    </div>
+    {% endif %}
+
+    {# ========== 个人总结 ========== #}
+    {% if resume.summary %}
+    <section>
+      <h2>📝 个人总结</h2>
+      <p class="summary-text">{{ resume.summary }}</p>
+    </section>
+    {% endif %}
+
+    {# ========== 能力结构（标题可由 skills_title 自定义） ========== #}
+    {% if skills %}
+    <section>
+      <h2>{{ skills_title }}</h2>
+      <ul class="skills-list">
+        {% for s in skills %}
+        <li><strong>{{ s.category }}</strong>：{{ s['items'] }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {# ========== 科研成果 ========== #}
+    {% if achievements %}
+    <section>
+      <h2>科研成果</h2>
+
+      {% if achievements.competition %}
+      {% for c in achievements.competition %}
+      <article class="block competition-block">
+        <div class="proj-row">
+          <span class="proj-date">{{ c.date }}</span>
+          <span class="proj-company">{{ c.name }}</span>
+          <span class="proj-role">{{ c.role }}</span>
+        </div>
+        {% if c.intro %}
+        <p class="proj-desc">{{ c.intro }}</p>
+        {% endif %}
+        {% if c.results %}
+        <p class="proj-desc"><span class="proj-label">成果：</span>{{ c.results }}</p>
+        {% endif %}
+      </article>
+      {% endfor %}
+      {% endif %}
+
+      {% if achievements.publication %}
+      {% for pub in achievements.publication %}
+      <article class="block">
+        <p class="pub-title">
+          <em>{{ pub.title }}</em>
+          {% if pub.award %}
+          <span class="award-badge">{{ pub.award }}</span>
+          {% endif %}
+        </p>
+        <p class="pub-meta">
+          {{ pub.authors }} · <strong>{{ pub.journal }}</strong>
+          {% if pub.level %}（{{ pub.level }}）{% endif %}
+          · {{ pub.year }}
+        </p>
+      </article>
+      {% endfor %}
+      {% endif %}
+
+      {% if achievements.patent %}
+      <ul>
+        {% for p in achievements.patent %}
+        <li>
+          {# type / status 都是可选字段：不写就不渲染 #}
+          {% if p.type %}<strong>{{ p.type }}</strong>：{% endif %}{{ p.title }}
+          {% if p.status %}
+          {% if p.status == "已授权" or p.status == "已登记" %}
+          <span class="status-green"> {{ p.status }}</span>
+          {% else %}
+          <span class="status-orange">🔄 {{ p.status }}</span>
+          {% endif %}
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+    </section>
+    {% endif %}
+
+    {# ========== 工作经历 ========== #}
+    {% if resume.internship %}
+    <section>
+      <h2>工作经历</h2>
+      {% for intern in resume.internship %}
+      <article class="block">
+        <div class="proj-row">
+          <span class="proj-title-group">
+            <strong class="proj-name">{{ intern.company }}</strong>
+            {% if intern.role %}<span class="proj-direction">｜{{ intern.role }}</span>{% endif %}
+          </span>
+          <span class="proj-date">{{ intern.date }}</span>
+        </div>
+        {% if intern.background %}
+        <p class="proj-desc"><span class="proj-label">公司 / 业务背景：</span>{{ intern.background }}</p>
+        {% endif %}
+        {% if intern.responsibility %}
+        <p class="proj-desc"><span class="proj-label">我的职责：</span>{{ intern.responsibility }}</p>
+        {% endif %}
+        {% if intern.highlights %}
+        <ul class="highlight-list">
+          {% for h in intern.highlights %}
+          <li>{{ h | bold | safe }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {# ========== 项目经历 ========== #}
+    {% if projects %}
+    <section>
+      <h2>项目经历</h2>
+      {% for proj in projects %}
+      <article class="block">
+        <div class="proj-row">
+          <span class="proj-title-group">
+            <strong class="proj-name">{{ proj.name }}</strong>
+            {% if proj.direction %}<span class="proj-direction">｜{{ proj.direction }}</span>{% endif %}
+            {% if proj.role %}<span class="proj-role">· {{ proj.role }}</span>{% endif %}
+          </span>
+          <span class="proj-date">{{ proj.date }}</span>
+        </div>
+        {% if proj.background %}
+        <p class="proj-desc"><span class="proj-label">项目背景：</span>{{ proj.background }}</p>
+        {% endif %}
+        {% if proj.responsibility %}
+        <p class="proj-desc"><span class="proj-label">我的职责：</span>{{ proj.responsibility }}</p>
+        {% endif %}
+        {% if proj.highlights %}
+        <ul class="highlight-list">
+          {% for h in proj.highlights %}
+          <li>{{ h | bold | safe }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if proj.results %}
+        <p class="proj-desc"><span class="proj-label">项目结果：</span>{{ proj.results | bold | safe }}</p>
+        {% endif %}
+        {% if proj.tech_stack %}
+        <p class="tech-stack"><strong>技术栈：</strong>{{ proj.tech_stack }}</p>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+  </main>
+</body>
+
+</html>

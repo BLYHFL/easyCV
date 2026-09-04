@@ -1,0 +1,57 @@
+/* ═════════ 风格 2 · 现代青（theme-modern）：色块标题 + 时间轴条目 ═════════
+   仅在对应主题激活时由 /resume 页加载；选择器以 body.theme-modern 为作用域。 */
+
+body.theme-modern {
+  --primary: #0e7490;
+  --line: #7cc4d8;
+  --link: #0e7490;
+}
+
+body.theme-modern .header-left h1 {
+  color: var(--primary);
+  letter-spacing: 1px;
+}
+
+body.theme-modern .avatar {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(14, 116, 144, 0.25);
+}
+
+body.theme-modern section h2 {
+  display: block;
+  line-height: 1.4;
+  font-size: 15px;
+  color: #14586e;
+  background: #e6f3f7;
+  border-left: 4px solid var(--primary);
+  border-radius: 0 4px 4px 0;
+  padding: 3px 10px;
+  margin-bottom: 10px;
+}
+
+body.theme-modern section h2::after {
+  content: none;
+}
+
+body.theme-modern .block {
+  position: relative;
+  padding-left: 18px;
+}
+
+body.theme-modern .block::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  background: #ffffff;
+}
+
+body.theme-modern .proj-name,
+body.theme-modern .proj-company strong {
+  color: var(--primary);
+}

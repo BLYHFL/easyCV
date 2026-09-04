@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>简历</title>
+    <link rel="stylesheet" href="/static/style.css?v={{ css_version }}" />
+  </head>
+  <body>
+    <main class="editor-page">
+      <section class="editor-panel">
+        <div class="toolbar">
+          <h1>YAMLResume Editor</h1>
+          <div class="toolbar-right">
+            <div class="switch-group">
+              <span class="switch-label">数据源</span>
+              <select id="sourceSelect" class="toolbar-select" title="切换简历数据源（不同岗位不同内容）">
+                {% for s in sources %}
+                <option value="{{ s }}" {% if s == current_src %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+              <button type="button" id="addSourceBtn" class="ghost-btn" title="新建数据源">＋</button>
+            </div>
+            <div class="switch-group">
+              <span class="switch-label">风格</span>
+              <select id="themeSelect" class="toolbar-select" title="切换简历渲染风格（数据源相同）">
+                {% for theme_id, theme_name in themes.items() %}
+                <option value="{{ theme_id }}">{{ theme_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <span id="status" class="status-idle">就绪</span>
+            <button type="button" id="exportBtn" title="直接打印当前预览（当前数据源 × 当前风格）">导出 PDF</button>
+          </div>
+        </div>
+        <textarea id="yamlInput" spellcheck="false">{{ yaml_text }}</textarea>
+      </section>
+      <section class="preview-panel">
+        <iframe id="previewFrame" src="/resume?src={{ current_src | urlencode }}" title="简历预览"></iframe>
+      </section>
+    </main>
+
+    <style>
+      .status-idle { color: #888; font-size: 13px; margin-right: 12px; }
+      .status-saving { color: #e67e22; font-size: 13px; margin-right: 12px; }
+      .status-saved { color: #27ae60; font-size: 13px; margin-right: 12px; }
+      .status-error { color: #e74c3c; font-size: 13px; margin-right: 12px; }
+    </style>
+
+    <script>
+      const yamlInput = document.getElementById("yamlInput");
+      const statusEl = document.getElementById("status");
+      const previewFrame = document.getElementById("previewFrame");
+      const sourceSelect = document.getElementById("sourceSelect");
+      const addSourceBtn = document.getElementById("addSourceBtn");
+      const CURRENT_SRC = {{ current_src | tojson }};
+
+      // ── 刷新右侧预览（带数据源 + 主题，服务端据此加载对应主题 CSS 文件） ──
+      function refreshPreview() {
+        previewFrame.src = "/resume?src=" + encodeURIComponent(CURRENT_SRC)
+          + "&theme=" + encodeURIComponent(currentTheme())
+          + "&t=" + Date.now();
+      }
+
+      // ── 渲染风格切换：写入 localStorage 后刷新预览，resume 页会读取同一份选择 ──
+      const THEME_KEY = "easyCV.theme";
+      const themeSelect = document.getElementById("themeSelect");
+
+      function currentTheme() {
+        try { return localStorage.getItem(THEME_KEY) || "classic"; } catch (err) { return "classic"; }
+      }
+
+      themeSelect.value = currentTheme();
+      themeSelect.addEventListener("change", () => {
+        try { localStorage.setItem(THEME_KEY, themeSelect.value); } catch (err) {}
+        refreshPreview();
+      });
+
+      // ── 导出 PDF：直接打印右侧预览 iframe，无需跳转独立页面 ──
+      const exportBtn = document.getElementById("exportBtn");
+      exportBtn.addEventListener("click", () => {
+        try {
+          const win = previewFrame.contentWindow;
+          if (win && win.document && win.document.body) {
+            win.focus();
+            win.print();
+            return;
+          }
+        } catch (err) {}
+        // iframe 尚未就绪时兜底：新开独立预览页打印
+        window.open("/resume?src=" + encodeURIComponent(CURRENT_SRC)
+          + "&theme=" + encodeURIComponent(currentTheme()), "_blank");
+      });
+
+      // ── 数据源切换：先保存当前内容，再整页跳转加载新数据源 ──
+      sourceSelect.addEventListener("change", async () => {
+        const next = sourceSelect.value;
+        const ok = await doSave(yamlInput.value);
+        if (!ok) {
+          // 保存失败（比如 YAML 有错），留在当前数据源，状态栏已提示
+          sourceSelect.value = CURRENT_SRC;
+          return;
+        }
+        setTimeout(() => {
+          window.location.search = "?src=" + encodeURIComponent(next);
+        }, 300);
+      });
+
+      addSourceBtn.addEventListener("click", async () => {
+        const name = (window.prompt("新数据源名称（将创建 resumes/名称.yaml）：") || "").trim();
+        if (!name) return;
+        try {
+          const resp = await fetch("/api/sources", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name }),
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.detail || "创建失败");
+          setStatus("已创建 " + name + " ✓", "status-saved");
+          setTimeout(() => {
+            window.location.search = "?src=" + encodeURIComponent(name);
+          }, 400);
+        } catch (err) {
+          setStatus(err.message, "status-error");
+        }
+      });
+
+      // ── 自动保存（防抖 500ms） ──
+      let saveTimer = null;
+      let isSaving = false;
+      let pendingSave = false;
+      // 打开页面时缓冲区内容 = 服务端当前内容，作为「已保存」基线；
+      // 预览 iframe 的初始 src 已由服务端带上当前数据源，无需再触发同步刷新
+      let lastSavedText = yamlInput.value;
+
+      function setStatus(text, cls) {
+        statusEl.textContent = text;
+        statusEl.className = cls;
+      }
+
+      async function doSave(text) {
+        if (isSaving) {
+          pendingSave = true;
+          return true;
+        }
+        if (text === lastSavedText) return true;
+
+        isSaving = true;
+        setStatus("保存中…", "status-saving");
+        try {
+          const resp = await fetch("/api/resume/raw?src=" + encodeURIComponent(CURRENT_SRC), {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ yaml_text: text }),
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.detail || "保存失败");
+          lastSavedText = text;
+          setStatus("已保存 ✓", "status-saved");
+          // 刷新右侧预览
+          refreshPreview();
+          return true;
+        } catch (err) {
+          setStatus(err.message, "status-error");
+          return false;
+        } finally {
+          isSaving = false;
+          if (pendingSave) {
+            pendingSave = false;
+            if (yamlInput.value !== lastSavedText) {
+              doSave(yamlInput.value);
+            }
+          }
+        }
+      }
+
+      function onYamlChange() {
+        const text = yamlInput.value;
+        if (text === lastSavedText) return;
+
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => doSave(text), 500);
+      }
+
+      // ── 监听输入变化 ──
+      yamlInput.addEventListener("input", onYamlChange);
+
+      // 粘贴时立即保存（不用等 500ms）
+      yamlInput.addEventListener("paste", () => {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => doSave(yamlInput.value), 200);
+      });
+
+      // 失去焦点时立即保存
+      yamlInput.addEventListener("blur", () => {
+        clearTimeout(saveTimer);
+        if (yamlInput.value !== lastSavedText) {
+          doSave(yamlInput.value);
+        }
+      });
+
+      // ── 快捷键 Ctrl+S / Cmd+S 也触发生效 ──
+      yamlInput.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+          e.preventDefault();
+          clearTimeout(saveTimer);
+          doSave(yamlInput.value);
+        }
+      });
+    </script>
+  </body>
+</html>

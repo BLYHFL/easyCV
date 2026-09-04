@@ -1,0 +1,166 @@
+/* ═════════ 风格 4 · 紧凑学术（theme-compact） ═════════
+   基于学术黑（衬线、居中标题、黑白灰）的高密度一页版：
+   统一行高刻度（正文 1.45 / 标题 1.3）、压缩段距与条目间距、隐藏证件照。
+   目标：单页 A4 容纳尽量多的信息。 */
+
+body.theme-compact {
+  --primary: #222222;
+  --line: #cccccc;
+  --link: #333333;
+  font-family: "Times New Roman", Times, Georgia, "Songti SC", "STSong", "SimSun", serif;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+body.theme-compact a {
+  text-decoration: underline;
+  text-decoration-color: #bbbbbb;
+  text-underline-offset: 2px;
+}
+
+/* ── 页面与头部 ── */
+
+body.theme-compact .page {
+  padding: 14px 24px;
+}
+
+body.theme-compact .header {
+  margin-bottom: 0;
+}
+
+body.theme-compact .header-main {
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+body.theme-compact .header-left {
+  text-align: center;
+}
+
+body.theme-compact .header-left h1 {
+  font-size: 21px;
+  margin-bottom: 2px;
+}
+
+body.theme-compact .header-left .meta {
+  font-size: 12px;
+  line-height: 1.45;
+  margin-bottom: 0;
+}
+
+/* 紧凑版不展示证件照 */
+body.theme-compact .header-right {
+  display: none;
+}
+
+body.theme-compact .target-position {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+/* ── 章节：统一标题节奏 ── */
+
+body.theme-compact section {
+  margin-top: 4px;
+}
+
+body.theme-compact section h2 {
+  display: block;
+  text-align: center;
+  line-height: 1.3;
+  font-size: 14px;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em;
+  color: #222222;
+  border-bottom: 1px solid #222222;
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+}
+
+body.theme-compact section h2::after {
+  content: none;
+}
+
+/* ── 条目：压缩纵向间距，提高信息密度 ── */
+
+body.theme-compact .block {
+  margin-bottom: 3px;
+}
+
+body.theme-compact .proj-row {
+  margin-bottom: 1px;
+}
+
+body.theme-compact .proj-name {
+  font-size: 13.5px;
+}
+
+body.theme-compact .proj-direction,
+body.theme-compact .proj-role {
+  font-size: 12px;
+}
+
+body.theme-compact .proj-date {
+  font-size: 12.5px;
+}
+
+body.theme-compact .proj-desc {
+  font-size: 12.5px;
+  line-height: 1.38;
+  margin-bottom: 1px;
+}
+
+body.theme-compact .proj-label {
+  font-size: 11.5px;
+}
+
+body.theme-compact ul {
+  margin-bottom: 1px;
+}
+
+body.theme-compact li {
+  font-size: 12.5px;
+  margin-bottom: 0.5px;
+  line-height: 1.4;
+}
+
+body.theme-compact .skills-list li {
+  margin-bottom: 2px;
+}
+
+body.theme-compact .skills-list li::before {
+  color: #888888;
+}
+
+body.theme-compact .summary-text {
+  font-size: 12.5px;
+  line-height: 1.38;
+}
+
+body.theme-compact .tech-stack {
+  font-size: 12px;
+  margin-top: 1px;
+}
+
+body.theme-compact .pub-title {
+  font-size: 13px;
+}
+
+body.theme-compact .pub-meta {
+  font-size: 12px;
+}
+
+body.theme-compact .award-badge {
+  font-size: 10.5px;
+  padding: 0 6px;
+  color: #444444;
+  background: #ffffff;
+  border: 1px solid #999999;
+}
+
+/* 打印：锁定 A4 零边距，保证单页排版在导出 PDF 时不因默认页边距溢出 */
+@page {
+  size: A4;
+  margin: 0;
+}

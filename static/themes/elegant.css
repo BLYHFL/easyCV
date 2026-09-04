@@ -1,0 +1,76 @@
+/* ═════════ 风格 3 · 学术黑（theme-elegant）：衬线字体、居中标题、黑白灰 ═════════
+   仅在对应主题激活时由 /resume 页加载；选择器以 body.theme-elegant 为作用域。 */
+
+body.theme-elegant {
+  --primary: #222222;
+  --line: #cccccc;
+  --link: #333333;
+  font-family: "Times New Roman", Times, Georgia, "Songti SC", "STSong", "SimSun", serif;
+}
+
+body.theme-elegant a {
+  text-decoration: underline;
+  text-decoration-color: #bbbbbb;
+  text-underline-offset: 2px;
+}
+
+body.theme-elegant .header-main {
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+body.theme-elegant .header-left {
+  text-align: center;
+}
+
+body.theme-elegant .header-right {
+  margin-left: 0;
+}
+
+body.theme-elegant .avatar {
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+/* 学术黑风格不展示证件照 */
+body.theme-elegant .header-right {
+  display: none;
+}
+
+body.theme-elegant section h2 {
+  display: block;
+  text-align: center;
+  line-height: 1.4;
+  font-size: 15px;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em; /* 补偿末字字距，让标题视觉居中 */
+  color: #222222;
+  border-bottom: 1px solid #222222;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+}
+
+body.theme-elegant section h2::after {
+  content: none;
+}
+
+body.theme-elegant .skills-list li::before {
+  color: #888888;
+}
+
+body.theme-elegant .proj-label {
+  color: #444444;
+}
+
+body.theme-elegant .proj-name,
+body.theme-elegant .proj-company strong {
+  color: #111111;
+}
+
+body.theme-elegant .award-badge {
+  color: #444444;
+  background: #ffffff;
+  border: 1px solid #999999;
+}

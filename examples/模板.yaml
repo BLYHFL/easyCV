@@ -1,0 +1,53 @@
+basics:
+  name: Your Name
+  position: "目标岗位 | 随时到岗"
+  age: "22岁"
+  gender: ""
+  phone: "138-0000-0000"
+  email: "you@example.com"
+
+education:
+  - date: "2021-09 ~ 2025-06"
+    school: XX大学
+    major: 计算机科学与技术
+  - date: "2018-09 ~ 2021-06"
+    school: XX中学
+    major: 理科
+
+code:
+  - label: "GitHub"
+    url: "https://github.com/yourname"
+  - label: "Portfolio"
+    url: "https://yoursite.com"
+
+personal_docs:
+  summary: "用一句话介绍自己的特点"
+  items:
+    - text: "项目或作品描述"
+      url: "https://github.com/yourname/project"
+
+team_projects:
+  - date: "2024-06 ~ 2024-09"
+    company: "公司/团队名称"
+    role: "开发"
+    name: "项目名称"
+    highlights:
+      - 你做了什么、用了什么技术、达成了什么效果
+      - 第二条描述
+    tech_stack: "Python、FastAPI、React"
+
+personal_projects:
+  - date: "2024-01 ~ 2024-03"
+    name: "个人项目名"
+    role: "独立开发"
+    url: "https://github.com/yourname/project"
+    description: "一句话描述项目。"
+    tech_stack: "TypeScript、Next.js"
+
+lab_tutorials:
+  - date: "2023-09 ~ 2024-06"
+    name: "实验/教程名"
+    role: "作者"
+    url: "https://github.com/yourname/lab"
+    description: "实验或教程的简要描述。"
+    tech_stack: "C/C++、Linux"

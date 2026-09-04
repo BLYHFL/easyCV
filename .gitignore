@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.aux
+
+# 系统文件
+.DS_Store
+
+# ===== 个人简历数据（不上传）=====
+resumes/
+images/
+examples/resume-legacy.yaml
+/resume*.yaml
+*.docx
+博客模板.md
+微信图片*.png
+
+# 本地工具目录
+.claude/
+.codegraph/
+.playwright-mcp/
+.reasonix/
+opencode.json
