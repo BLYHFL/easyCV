@@ -2,8 +2,6 @@
 
 一个 Yaml 文件定义所有内容，实时预览，在线编辑，可一键导出 PDF，不用装任何软件，可丝滑接入各种skill
 
-[示例简历 PDF](https://github.com/lvy010/X-Plore/blob/main/data/CV.pdf)
-
 克隆仓库 → 编辑 `resumes/` 下的 YAML → 启动服务 → 浏览器打开即可预览和导出。首次启动会把根目录 `resume.yaml`（如存在）自动迁移为 `resumes/主简历.yaml`。
 
 ## Preview
